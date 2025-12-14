@@ -71,6 +71,46 @@ router.get('/images', async (req, res) => {
   }
 });
 
+// Get encrypted image data for display (shows scrambled/encrypted visual)
+router.get('/images/:id/encrypted', async (req, res) => {
+  try {
+    const image = await Image.findById(req.params.id);
+    
+    if (!image) {
+      return res.status(404).json({ error: 'Image not found' });
+    }
+
+    res.json({
+      encryptedData: image.encryptedImage,
+      originalName: image.originalName,
+      mimeType: image.mimeType
+    });
+  } catch (error) {
+    console.error('Get encrypted image error:', error);
+    res.status(500).json({ error: 'Failed to get encrypted image' });
+  }
+});
+
+// Download encrypted file
+router.get('/images/:id/download', async (req, res) => {
+  try {
+    const image = await Image.findById(req.params.id);
+    
+    if (!image) {
+      return res.status(404).json({ error: 'Image not found' });
+    }
+
+    const encryptedBuffer = Buffer.from(image.encryptedImage, 'base64');
+    
+    res.setHeader('Content-Type', 'application/octet-stream');
+    res.setHeader('Content-Disposition', `attachment; filename="${image.name}_encrypted.enc"`);
+    res.send(encryptedBuffer);
+  } catch (error) {
+    console.error('Download error:', error);
+    res.status(500).json({ error: 'Failed to download encrypted image' });
+  }
+});
+
 router.post('/decrypt/:id', async (req, res) => {
   try {
     const { password } = req.body;
